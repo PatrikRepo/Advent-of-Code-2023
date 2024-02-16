@@ -47,10 +47,9 @@ void parseInput(std::vector<Hailstone> &stones)
 	input.close();
 }
 
-int main()
+uint64_t calculateIntersections(const std::vector<Hailstone> &stones)
 {
 	uint64_t result = 0;
-	std::vector<Hailstone> stones;
 	
 	for(auto stone1 = stones.begin(); stone1 != stones.end()-1; stone1++)
 	{
@@ -73,6 +72,142 @@ int main()
 		}
 	}
 	
-	std::cout << "result: " << result << std::endl;
+	return result;
+}
+
+uint64_t calculateCollisions(const std::vector<Hailstone> &stones)
+{
+	uint64_t result = 0;
+	long double matrix[4][5];
+	
+	for(int i=0; i<4; i++)
+	{
+		matrix[i][0] = stones[i+1].posX - stones[i].posX;
+		matrix[i][1] = stones[i].posY - stones[i+1].posY;
+		matrix[i][2] = stones[i].vX - stones[i+1].vX;
+		matrix[i][3] = stones[i+1].vY - stones[i].vY;
+		matrix[i][4] = (stones[i].posY)*(stones[i].vX) - (stones[i].posX)*(stones[i].vY) + (stones[i+1].posX)*(stones[i+1].vY) - (stones[i+1].posY)*(stones[i+1].vX);
+	}
+
+	for(int i=4; i>=0; i--)
+	{
+		matrix[0][i] = (long double)matrix[0][i]/matrix[0][0];
+	}
+
+	for(int i=1; i<4; i++)
+	{
+		for(int j=4; j>=0; j--)
+		{
+				matrix[i][j] -= matrix[0][j]*matrix[i][0];
+		}
+	}
+	
+	for(int i=4; i>=1; i--)
+	{
+		matrix[1][i] = (long double)matrix[1][i]/matrix[1][1];
+	}
+	
+	for(int i=2; i<4; i++)
+	{
+		for(int j=4; j>=1; j--)
+		{
+				matrix[i][j] -= matrix[1][j]*matrix[i][1];
+		}
+	}
+
+	for(int i=4; i>=2; i--)
+	{
+		matrix[2][i] = (long double)matrix[2][i]/matrix[2][2];
+	}
+		matrix[2][2] = 1;
+
+	for(int i=3; i<4; i++)
+	{
+		for(int j=4; j>=2; j--)
+		{
+				matrix[i][j] -= matrix[2][j]*matrix[i][2];
+		}
+	}
+
+
+	matrix[3][4] = (long double)matrix[3][4]/matrix[3][3];
+
+	long double x = matrix[3][4];
+	long double y = matrix[2][4] - (matrix[2][3]*x);
+	
+	for(int i=0; i<4; i++)
+	{
+		matrix[i][0] = stones[i+1].posY - stones[i].posY;
+		matrix[i][1] = stones[i].posZ - stones[i+1].posZ;
+		matrix[i][2] = stones[i+1].vZ - stones[i].vZ;
+		matrix[i][3] = stones[i].vY - stones[i+1].vY;
+		matrix[i][4] = (stones[i].posZ)*(stones[i].vY) - (stones[i].posY)*(stones[i].vZ) + (stones[i+1].posY)*(stones[i+1].vZ) - (stones[i+1].posZ)*(stones[i+1].vY);
+	}
+	
+	for(int i=4; i>=0; i--)
+	{
+		matrix[0][i] = (long double)matrix[0][i]/matrix[0][0];
+	}
+
+	for(int i=1; i<4; i++)
+	{
+		for(int j=4; j>=0; j--)
+		{
+				matrix[i][j] -= matrix[0][j]*matrix[i][0];
+		}
+	}
+	
+	for(int i=4; i>=1; i--)
+	{
+		matrix[1][i] = (long double)matrix[1][i]/matrix[1][1];
+	}
+	
+	for(int i=2; i<4; i++)
+	{
+		for(int j=4; j>=1; j--)
+		{
+				matrix[i][j] -= matrix[1][j]*matrix[i][1];
+		}
+	}
+
+	for(int i=4; i>=2; i--)
+	{
+		matrix[2][i] = (long double)matrix[2][i]/matrix[2][2];
+	}
+		matrix[2][2] = 1;
+
+	for(int i=3; i<4; i++)
+	{
+		for(int j=4; j>=2; j--)
+		{
+				matrix[i][j] -= matrix[2][j]*matrix[i][2];
+		}
+	}
+
+
+	matrix[3][4] = (long double)matrix[3][4]/matrix[3][3];
+
+
+	long double z = matrix[3][4];
+
+	result = x + y + z;
+
+	return result;
+}
+
+int main()
+{
+	uint64_t resultA = 0;
+	uint64_t resultB = 0;
+	std::vector<Hailstone> stones;
+	
+	parseInput(stones);
+	
+	resultA = calculateIntersections(stones);
+	resultB = calculateCollisions(stones);
+	
+	std::cout << "resultA: " << resultA << '\n';
+	std::cout << "resultB: " << resultB << std::endl;
+	
 	return 0;
 }

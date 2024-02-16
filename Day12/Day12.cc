@@ -3,7 +3,7 @@
 #include <vector>
 #include <unordered_map>
 
-static void parseInput(std::vector<std::string> &map)
+void parseInput(std::vector<std::string> &map)
 {
 	std::string line;
 	
@@ -18,7 +18,7 @@ static void parseInput(std::vector<std::string> &map)
 	input.close();
 }
 
-static bool allFlagsRaised(const std::string &flaggedMap)
+bool allFlagsRaised(const std::string &flaggedMap)
 {
 	bool allFlagsRaised = false;
 	size_t pos = flaggedMap.find_first_of("#");
@@ -30,7 +30,7 @@ static bool allFlagsRaised(const std::string &flaggedMap)
 	return allFlagsRaised;
 }
 
-static uint32_t countFlagsLeft(const std::string &map)
+uint32_t countFlagsLeft(const std::string &map)
 {
 	uint32_t result = 0;
 	
@@ -45,7 +45,7 @@ static uint32_t countFlagsLeft(const std::string &map)
 	return result;
 }
 
-static uint64_t fitFlagsInMap(const std::string &map, size_t pos, const std::vector<int> &flags, unsigned int flagNumber, std::unordered_map<uint32_t, uint64_t> &cashe)
+uint64_t fitFlagsInMap(const std::string &map, size_t pos, const std::vector<int> &flags, unsigned int flagNumber, std::unordered_map<uint32_t, uint64_t> &cashe)
 {
 	uint64_t result = 0;
 	size_t startpos = 0;
@@ -116,7 +116,7 @@ static uint64_t fitFlagsInMap(const std::string &map, size_t pos, const std::vec
 	return result;
 }
 
-static uint64_t getCombinationsBigMap(const std::string &line)
+uint64_t getCombinationsBigMap(const std::string &line)
 {
 	uint64_t result = 0;
 	size_t pos = 0;
@@ -156,7 +156,7 @@ static uint64_t getCombinationsBigMap(const std::string &line)
 	return result;
 }
 
-static uint64_t getCombinationsSmallMap(const std::string &line)
+uint64_t getCombinationsSmallMap(const std::string &line)
 {
 	uint64_t result = 0;
 	size_t pos = 0;
