@@ -1,0 +1,3 @@
+My solutions for Advent of Code 2023. Written in C++, input files not submitted. All days compatible with C++11 except for Day8 and Day20 which uses lmc from C++17. 
+Compiled with GCC, recommended to set -O3.
+
