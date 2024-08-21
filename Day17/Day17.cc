@@ -1,42 +1,20 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
-#include <queue>
-#include <unordered_map>
-
-enum class Direction 
-{
-	UP,
-	RIGHT,
-	DOWN,
-	LEFT
-};
-	
+#include <deque>
+#include <algorithm>
 
 struct Node
 {
-	unsigned int direction = 0;
-	unsigned int posX = 0;
-	unsigned int posY = 0;
-	uint32_t cost = 0;
-	unsigned int directionCount = 0;
-	void setDirection(Direction newDirection)
-	{
-		direction = (unsigned int)newDirection;
-	}
-	int turnRight()
-	{
-		return (direction+1)%4;
-	}
-	int turnLeft()
-	{
-		return (direction+3)%4;
-	}
+	int x = 0;
+	int y = 0;
+	unsigned cost = 0;
+	bool vertical = false;
 };
 
-struct orderNodes
+struct SortNodes
 {
-	bool operator()(const Node node1, const Node node2) const { return node1.cost > node2.cost;}
+	bool operator()(const Node node1, const Node node2) const { return node1.cost < node2.cost; }
 };
 
 void parseInput(std::vector<std::string> &map)
@@ -54,179 +32,129 @@ void parseInput(std::vector<std::string> &map)
 	input.close();
 }
 
-void updatePos(Node &node, const int steps)
-	{
-		switch(node.direction)
-		{
-			case (int)Direction::UP:
-				node.posY = node.posY-steps;
-				break;
-			case (int)Direction::RIGHT:
-				node.posX = node.posX+steps;
-				break;
-			case (int)Direction::DOWN:
-				node.posY = node.posY+steps;
-				break;
-			case (int)Direction::LEFT:
-				node.posX = node.posX-steps;
-		}
-	}
-
-bool checkIfNodeIsAllowed(const Node &node, const std::vector<std::string> &map)
-{
-	bool result = false;
-	if(node.posX >= 0 && node.posX < map[0].length() && node.posY >= 0 && node.posY < map.size())
-	{
-		result = true;
-	}
-	return result;
-}
-
-void findNeighbors(Node &node, std::vector<Node> &neighbors, const std::vector<std::string> &map, const unsigned int minLength, const unsigned int maxLength)
-{
-	Node newNode;
-	if(node.directionCount < maxLength)
-	{
-		newNode = node;
-		updatePos(newNode, 1);
-		if(checkIfNodeIsAllowed(newNode, map))
-		{
-			newNode.directionCount = node.directionCount+1;
-			newNode.cost = node.cost + map[newNode.posY][newNode.posX] - '0';
-			neighbors.push_back(newNode);
-		}
-	}
-	
-	newNode = node;
-	newNode.direction = node.turnRight();
-	updatePos(newNode, minLength);
-	if(checkIfNodeIsAllowed(newNode, map))
-	{
-		newNode.directionCount = minLength;
-		
-		newNode.cost = node.cost;
-		for(unsigned int i=1; i<=newNode.posX-node.posX; i++)
-		{
-			newNode.cost += map[node.posY][node.posX + i] - '0';
-		} 
-		for(unsigned int i=0; i<node.posX-newNode.posX; i++)
-		{
-			newNode.cost += map[newNode.posY][newNode.posX+i] - '0';
-		} 
-		for(unsigned int i=1; i<=newNode.posY-node.posY; i++)
-		{
-			newNode.cost += map[node.posY+i][node.posX] - '0';
-		} 
-		for(unsigned int i=0; i<node.posY-newNode.posY; i++)
-		{
-			newNode.cost += map[newNode.posY+i][newNode.posX] - '0';
-		} 
-		neighbors.push_back(newNode);
-	}
-
-	newNode = node;
-	newNode.direction = node.turnLeft();
-	updatePos(newNode, minLength);
-	if(checkIfNodeIsAllowed(newNode, map))
-	{
-		newNode.directionCount = minLength;
-		
-		newNode.cost = node.cost;
-		for(unsigned int i=1; i<=newNode.posX-node.posX; i++)
-		{
-			newNode.cost += map[node.posY][node.posX + i] - '0';
-		} 
-		for(unsigned int i=0; i<node.posX-newNode.posX; i++)
-		{
-			newNode.cost += map[newNode.posY][newNode.posX+i] - '0';
-		} 
-		for(unsigned int i=1; i<=newNode.posY-node.posY; i++)
-		{
-			newNode.cost += map[node.posY+i][node.posX] - '0';
-		} 
-		for(unsigned int i=0; i<node.posY-newNode.posY; i++)
-		{
-			newNode.cost += map[newNode.posY+i][newNode.posX] - '0';
-		} 
-		neighbors.push_back(newNode);
-	}
-}
-
-int walk(std::priority_queue<Node, std::vector<Node>, orderNodes> &queue, const std::vector<std::string> &map, const unsigned int minLength, const unsigned int maxLength)
-{
-	bool done = false;
-	unsigned int result = 0;
-	std::vector<Node> calculatedNodes;
-	while(!done)
-	{
-
-		std::vector<Node> neighbors;
-		
-		Node node = queue.top();
-		queue.pop();
-
-		if(node.posY == map.size()-1 && node.posX == map[0].length()-1)
-		{
-			done = true;
-			result = node.cost;
-			break;
-		}
-
-		bool calculated = false;
-		for(auto it=calculatedNodes.begin(); it!=calculatedNodes.end(); it++)
-		{
-			if(node.posX == it->posX && node.posY == it->posY && node.direction == it->direction && node.directionCount >= it->directionCount)
-			{
-				calculated = true;
-				break;
-			}
-		}
-		if(!calculated)
-		{
-			calculatedNodes.push_back(node);
-			findNeighbors(node, neighbors, map, minLength, maxLength);
-
-			for(auto it=neighbors.begin(); it!=neighbors.end(); it++)
-			{
-				queue.push(*it);
-			}
-		}
-		if(queue.empty())
-		{
-			done=true;
-		}
-	}
-	return result;
-}
-
-uint64_t findPath(const std::vector<std::string> &map, const unsigned int minLength, const unsigned int maxLength)
+uint64_t findPath(const std::vector<std::string> &map, int minLength, int maxLength)
 {
 	uint64_t result = 0;
 
-	std::priority_queue<Node, std::vector<Node>, orderNodes> queue;
+	int goalX = map[0].size()-1;
+	int goalY = map.size()-1;
+	std::deque<Node> openList;
+	std::vector<Node> closedList;
 	
 	Node node; 
+	node.vertical = false;
+	openList.push_back(node);
 	
-	node.setDirection(Direction::RIGHT);
-	node.directionCount = minLength;
-	for(unsigned int i=1; i<=minLength; i++)
-	{
-		node.cost += map[0][i] - '0';
-	}
-	node.posX = minLength;
-	queue.push(node);
-
-	node.setDirection(Direction::DOWN);
-	node.posX = 0;
-	node.posY = minLength;
-	node.cost = 0;
-	for(unsigned int i=1; i<=minLength; i++)
-	{
-		node.cost += map[i][0] - '0';
-	}
-	queue.push(node);
+	node.vertical = true;
+	openList.push_back(node);
 	
-	result = walk(queue, map, minLength, maxLength);
+	while(!openList.empty())
+	{
+		node = openList.front();
+		openList.pop_front();
+		if(node.x == goalX && node.y == goalY)
+		{
+			result = node.cost;
+			break;
+		}
+		closedList.push_back(node);
+		
+		if(node.vertical)
+		{
+			for(int i=minLength; i<=maxLength && node.y-i >= 0; i++)
+			{
+				Node newNode = node;
+				newNode.vertical = false;
+				newNode.y -= i;
+				for(int j=1; j<=i; j++)
+				{	
+					newNode.cost += map[node.y-j][node.x] - '0';
+				}
+				
+				auto it = std::find_if(openList.begin(),openList.end(),[newNode](Node oNode) { return newNode.x == oNode.x && newNode.y == oNode.y && newNode.vertical == oNode.vertical && newNode.cost < oNode.cost; });
+				if(it != std::end(openList))
+				{
+					it->cost = newNode.cost;
+				}
+				
+				if(std::find_if(openList.begin(),openList.end(),[newNode](Node oNode) { return newNode.x == oNode.x && newNode.y == oNode.y && newNode.vertical == oNode.vertical; }) == std::end(openList) &&
+						std::find_if(closedList.begin(),closedList.end(),[newNode](Node cNode) { return newNode.x == cNode.x && newNode.y == cNode.y && newNode.vertical == cNode.vertical; }) == std::end(closedList))
+				{
+					openList.push_back(newNode);
+				}
+			}
+			for(int i=minLength; i<=maxLength && (unsigned)node.y+i < map.size(); i++)
+			{
+				Node newNode = node;
+				newNode.vertical = false;
+				newNode.y += i;
+				for(int j=1; j<=i; j++)
+				{	
+					newNode.cost += map[node.y+j][node.x] - '0';
+				}
+				
+				auto it = std::find_if(openList.begin(),openList.end(),[newNode](Node oNode) { return newNode.x == oNode.x && newNode.y == oNode.y && newNode.vertical == oNode.vertical && newNode.cost < oNode.cost; });
+				if(it != std::end(openList))
+				{
+					it->cost = newNode.cost;
+				}
+				
+				if(std::find_if(openList.begin(),openList.end(),[newNode](Node oNode) { return newNode.x == oNode.x && newNode.y == oNode.y && newNode.vertical == oNode.vertical; }) == std::end(openList) &&
+						std::find_if(closedList.begin(),closedList.end(),[newNode](Node cNode) { return newNode.x == cNode.x && newNode.y == cNode.y && newNode.vertical == cNode.vertical; }) == std::end(closedList))
+				{
+					openList.push_back(newNode);
+				}
+			}
+		}
+		else
+		{
+			for(int i=minLength; i<=maxLength && node.x-i >= 0; i++)
+			{
+				Node newNode = node;
+				newNode.vertical = true;
+				newNode.x -= i;
+				for(int j=1; j<=i; j++)
+				{	
+					newNode.cost += map[node.y][node.x-j] - '0';
+				}
+				
+				auto it = std::find_if(openList.begin(),openList.end(),[newNode](Node oNode) { return newNode.x == oNode.x && newNode.y == oNode.y && newNode.vertical == oNode.vertical && newNode.cost < oNode.cost; });
+				if(it != std::end(openList))
+				{
+					it->cost = newNode.cost;
+				}
+				
+				if(std::find_if(openList.begin(),openList.end(),[newNode](Node oNode) { return newNode.x == oNode.x && newNode.y == oNode.y && newNode.vertical == oNode.vertical; }) == std::end(openList) &&
+						std::find_if(closedList.begin(),closedList.end(),[newNode](Node cNode) { return newNode.x == cNode.x && newNode.y == cNode.y && newNode.vertical == cNode.vertical; }) == std::end(closedList))
+				{
+					openList.push_back(newNode);
+				}
+			}
+			for(int i=minLength; i<=maxLength && (unsigned)node.x+i < map[0].size(); i++)
+			{
+				Node newNode = node;
+				newNode.vertical = true;
+				newNode.x += i;
+				for(int j=1; j<=i; j++)
+				{	
+					newNode.cost += map[node.y][node.x+j] - '0';
+				}
+				
+				auto it = std::find_if(openList.begin(),openList.end(),[newNode](Node oNode) { return newNode.x == oNode.x && newNode.y == oNode.y && newNode.vertical == oNode.vertical && newNode.cost < oNode.cost; });
+				if(it != std::end(openList))
+				{
+					it->cost = newNode.cost;
+				}
+				
+				if(std::find_if(openList.begin(),openList.end(),[newNode](Node oNode) { return newNode.x == oNode.x && newNode.y == oNode.y && newNode.vertical == oNode.vertical; }) == std::end(openList) &&
+						std::find_if(closedList.begin(),closedList.end(),[newNode](Node cNode) { return newNode.x == cNode.x && newNode.y == cNode.y && newNode.vertical == cNode.vertical; }) == std::end(closedList))
+				{
+					openList.push_back(newNode);
+				}
+			}
+		}
+		std::sort(openList.begin(), openList.end(), SortNodes());
+	}
 	
 	return result;
 }
