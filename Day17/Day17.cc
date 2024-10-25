@@ -14,7 +14,7 @@ struct Node
 
 struct SortNodes
 {
-	bool operator()(const Node node1, const Node node2) const { return node1.cost < node2.cost; }
+	bool operator()(const Node &node1, const Node &node2) const { return node1.cost < node2.cost; }
 };
 
 void parseInput(std::vector<std::string> &map)
@@ -59,6 +59,8 @@ uint64_t findPath(const std::vector<std::string> &map, int minLength, int maxLen
 		}
 		closedList.push_back(node);
 		
+		std::vector<Node> newNodes;
+				
 		if(node.vertical)
 		{
 			for(int i=minLength; i<=maxLength && node.y-i >= 0; i++)
@@ -71,17 +73,7 @@ uint64_t findPath(const std::vector<std::string> &map, int minLength, int maxLen
 					newNode.cost += map[node.y-j][node.x] - '0';
 				}
 				
-				auto it = std::find_if(openList.begin(),openList.end(),[newNode](Node oNode) { return newNode.x == oNode.x && newNode.y == oNode.y && newNode.vertical == oNode.vertical && newNode.cost < oNode.cost; });
-				if(it != std::end(openList))
-				{
-					it->cost = newNode.cost;
-				}
-				
-				if(std::find_if(openList.begin(),openList.end(),[newNode](Node oNode) { return newNode.x == oNode.x && newNode.y == oNode.y && newNode.vertical == oNode.vertical; }) == std::end(openList) &&
-						std::find_if(closedList.begin(),closedList.end(),[newNode](Node cNode) { return newNode.x == cNode.x && newNode.y == cNode.y && newNode.vertical == cNode.vertical; }) == std::end(closedList))
-				{
-					openList.push_back(newNode);
-				}
+				newNodes.push_back(newNode);
 			}
 			for(int i=minLength; i<=maxLength && (unsigned)node.y+i < map.size(); i++)
 			{
@@ -92,18 +84,8 @@ uint64_t findPath(const std::vector<std::string> &map, int minLength, int maxLen
 				{	
 					newNode.cost += map[node.y+j][node.x] - '0';
 				}
-				
-				auto it = std::find_if(openList.begin(),openList.end(),[newNode](Node oNode) { return newNode.x == oNode.x && newNode.y == oNode.y && newNode.vertical == oNode.vertical && newNode.cost < oNode.cost; });
-				if(it != std::end(openList))
-				{
-					it->cost = newNode.cost;
-				}
-				
-				if(std::find_if(openList.begin(),openList.end(),[newNode](Node oNode) { return newNode.x == oNode.x && newNode.y == oNode.y && newNode.vertical == oNode.vertical; }) == std::end(openList) &&
-						std::find_if(closedList.begin(),closedList.end(),[newNode](Node cNode) { return newNode.x == cNode.x && newNode.y == cNode.y && newNode.vertical == cNode.vertical; }) == std::end(closedList))
-				{
-					openList.push_back(newNode);
-				}
+
+				newNodes.push_back(newNode);
 			}
 		}
 		else
@@ -118,17 +100,7 @@ uint64_t findPath(const std::vector<std::string> &map, int minLength, int maxLen
 					newNode.cost += map[node.y][node.x-j] - '0';
 				}
 				
-				auto it = std::find_if(openList.begin(),openList.end(),[newNode](Node oNode) { return newNode.x == oNode.x && newNode.y == oNode.y && newNode.vertical == oNode.vertical && newNode.cost < oNode.cost; });
-				if(it != std::end(openList))
-				{
-					it->cost = newNode.cost;
-				}
-				
-				if(std::find_if(openList.begin(),openList.end(),[newNode](Node oNode) { return newNode.x == oNode.x && newNode.y == oNode.y && newNode.vertical == oNode.vertical; }) == std::end(openList) &&
-						std::find_if(closedList.begin(),closedList.end(),[newNode](Node cNode) { return newNode.x == cNode.x && newNode.y == cNode.y && newNode.vertical == cNode.vertical; }) == std::end(closedList))
-				{
-					openList.push_back(newNode);
-				}
+				newNodes.push_back(newNode);
 			}
 			for(int i=minLength; i<=maxLength && (unsigned)node.x+i < map[0].size(); i++)
 			{
@@ -140,19 +112,26 @@ uint64_t findPath(const std::vector<std::string> &map, int minLength, int maxLen
 					newNode.cost += map[node.y][node.x+j] - '0';
 				}
 				
-				auto it = std::find_if(openList.begin(),openList.end(),[newNode](Node oNode) { return newNode.x == oNode.x && newNode.y == oNode.y && newNode.vertical == oNode.vertical && newNode.cost < oNode.cost; });
-				if(it != std::end(openList))
-				{
-					it->cost = newNode.cost;
-				}
-				
-				if(std::find_if(openList.begin(),openList.end(),[newNode](Node oNode) { return newNode.x == oNode.x && newNode.y == oNode.y && newNode.vertical == oNode.vertical; }) == std::end(openList) &&
-						std::find_if(closedList.begin(),closedList.end(),[newNode](Node cNode) { return newNode.x == cNode.x && newNode.y == cNode.y && newNode.vertical == cNode.vertical; }) == std::end(closedList))
+				newNodes.push_back(newNode);
+			}
+		}
+		
+		for(auto &newNode:newNodes)
+		{
+			auto it = std::find_if(openList.begin(),openList.end(),[newNode](Node &oNode) { return newNode.x == oNode.x && newNode.y == oNode.y && newNode.vertical == oNode.vertical; });
+			if(it != std::end(openList))
+			{
+				it->cost = (newNode.cost < it->cost) ? newNode.cost : it->cost;
+			}
+			else
+			{
+				if(std::find_if(closedList.begin(),closedList.end(),[newNode](Node &cNode) { return newNode.x == cNode.x && newNode.y == cNode.y && newNode.vertical == cNode.vertical; }) == std::end(closedList))
 				{
 					openList.push_back(newNode);
 				}
 			}
 		}
+		
 		std::sort(openList.begin(), openList.end(), SortNodes());
 	}
 	
