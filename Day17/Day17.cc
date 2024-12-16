@@ -1,8 +1,8 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
-#include <deque>
 #include <algorithm>
+#include <unordered_set>
 
 struct Node
 {
@@ -10,11 +10,6 @@ struct Node
 	int y = 0;
 	unsigned cost = 0;
 	bool vertical = false;
-};
-
-struct SortNodes
-{
-	bool operator()(const Node &node1, const Node &node2) const { return node1.cost < node2.cost; }
 };
 
 void parseInput(std::vector<std::string> &map)
@@ -38,8 +33,8 @@ uint64_t findPath(const std::vector<std::string> &map, int minLength, int maxLen
 
 	int goalX = map[0].size()-1;
 	int goalY = map.size()-1;
-	std::deque<Node> openList;
-	std::vector<Node> closedList;
+	std::vector<Node> openList;
+	std::unordered_set<unsigned> closedList;
 	
 	Node node; 
 	node.vertical = false;
@@ -50,14 +45,15 @@ uint64_t findPath(const std::vector<std::string> &map, int minLength, int maxLen
 	
 	while(!openList.empty())
 	{
-		node = openList.front();
-		openList.pop_front();
+		node = openList.back();
+		openList.pop_back();
+
 		if(node.x == goalX && node.y == goalY)
 		{
 			result = node.cost;
 			break;
 		}
-		closedList.push_back(node);
+		closedList.emplace(((node.x+1)*10000) + ((node.y+1)*10) + node.vertical);
 		
 		std::vector<Node> newNodes;
 				
@@ -118,21 +114,21 @@ uint64_t findPath(const std::vector<std::string> &map, int minLength, int maxLen
 		
 		for(auto &newNode:newNodes)
 		{
-			auto it = std::find_if(openList.begin(),openList.end(),[newNode](Node &oNode) { return newNode.x == oNode.x && newNode.y == oNode.y && newNode.vertical == oNode.vertical; });
+			auto it = std::find_if(openList.begin(),openList.end(),[&newNode](const Node &oNode) { return newNode.x == oNode.x && newNode.y == oNode.y && newNode.vertical == oNode.vertical; });
 			if(it != std::end(openList))
 			{
 				it->cost = (newNode.cost < it->cost) ? newNode.cost : it->cost;
 			}
 			else
 			{
-				if(std::find_if(closedList.begin(),closedList.end(),[newNode](Node &cNode) { return newNode.x == cNode.x && newNode.y == cNode.y && newNode.vertical == cNode.vertical; }) == std::end(closedList))
+				if(closedList.count(((newNode.x+1)*10000) + ((newNode.y+1)*10) + newNode.vertical) == 0)
 				{
-					openList.push_back(newNode);
+					openList.insert(openList.begin(), newNode);
 				}
 			}
 		}
 		
-		std::sort(openList.begin(), openList.end(), SortNodes());
+		std::sort(openList.begin(), openList.end(), [](const Node &aNode, const Node &bNode) { return aNode.cost > bNode.cost;});
 	}
 	
 	return result;
